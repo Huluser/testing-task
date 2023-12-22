@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cron Schedule Editor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f4f4f4;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    textarea {
+      width: calc(100% - 40px);
+      height: 60px;
+      resize: none;
+      margin-bottom: 10px;
+      padding: 5px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+    }
+
+    select, input[type="checkbox"], input[type="number"], input[type="time"], button {
+      margin-bottom: 10px;
+      font-size: 14px;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+
+    button {
+      cursor: pointer;
+      background-color: #ccc;
+      color: #333;
+    }
+
+    button:hover {
+      background-color: #bbb;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cron Schedule Editor</h1>
+  
+  <textarea id="cronString" rows="4" cols="50"></textarea><br>
+
+  <select id="scheduleType" onchange="selectScheduleType()">
+    <option value="everyXMinutes">Run every X minutes</option>
+    <option value="weeklyAtTime">Weekly on selected days at time</option>
+    <option value="dailyAtTime">Daily at one or two specified times</option>
+    <option value="every5thDayOfMonth">Every 5th day of the month</option>
+  </select><br>
+
+  <div id="additionalFields"></div><br>
+
+  <button onclick="saveCron()">Save</button>
+  <button onclick="loadCron()">Load</button>
+
+  <script>
+    function selectScheduleType() {
+      var scheduleType = document.getElementById("scheduleType").value;
+      var additionalFields = document.getElementById("additionalFields");
+
+      additionalFields.innerHTML = ""; // Очистка предыдущих дополнительных полей
+
+      switch (scheduleType) {
+        case "everyXMinutes":
+          additionalFields.innerHTML = 'Run every <input type="number" id="xMinutes" min="1" value="5"> minutes';
+          break;
+        case "weeklyAtTime":
+          additionalFields.innerHTML = 'Select days: <br>' +
+            '<input type="checkbox" id="mon"> Monday' +
+            '<input type="checkbox" id="tue"> Tuesday' +
+            '<input type="checkbox" id="wed"> Wednesday' +
+            '<input type="checkbox" id="thu"> Thursday' +
+            '<input type="checkbox" id="fri"> Friday' +
+            '<input type="checkbox" id="sat"> Saturday' +
+            '<input type="checkbox" id="sun"> Sunday' +
+            '<br>At time: <input type="time" id="selectedTime">';
+          break;
+        case "dailyAtTime":
+          additionalFields.innerHTML = 'Specify time(s): <br>' +
+            '<input type="time" id="time1"> <input type="time" id="time2">';
+          break;
+        case "every5thDayOfMonth":
+          additionalFields.innerHTML = 'Day of month: <input type="number" id="dayOfMonth" min="1" max="31" value="5">';
+          break;
+        default:
+          break;
+      }
+    }
+
+    function saveCron() {
+      var cronString = document.getElementById("cronString");
+      var scheduleType = document.getElementById("scheduleType").value;
+      var additionalFields = document.getElementById("additionalFields");
+      var result = "";
+
+      switch (scheduleType) {
+        case "everyXMinutes":
+          result = '*/' + document.getElementById("xMinutes").value + ' * * * *';
+          break;
+        case "weeklyAtTime":
+          var days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+          var selectedDays = "";
+          days.forEach(function(day) {
+            if (document.getElementById(day).checked) {
+              selectedDays += day.toUpperCase().slice(0, 3) + ",";
+            }
+          });
+          var selectedTime = document.getElementById("selectedTime").value;
+          result = selectedTime.split(":")[1] + " " + selectedTime.split(":")[0] + " * * " + selectedDays.slice(0, -1);
+          break;
+        case "dailyAtTime":
+          var time1 = document.getElementById("time1").value;
+          var time2 = document.getElementById("time2").value;
+          if (time2 !== "") {
+            result = time2.split(":")[1] + " " + time2.split(":")[0] + "," + time1.split(":")[1] + " " + time1.split(":")[0] + " * * *";
+          } else {
+            result = time1.split(":")[1] + " " + time1.split(":")[0] + " * * *";
+          }
+          break;
+        case "every5thDayOfMonth":
+          result = "0 0 5 */1 *";
+          break;
+        default:
+          break;
+      }
+
+      cronString.value = result;
+      alert('Schedule saved in CRON format:\n' + result);
+    }
+
+    function loadCron() {
+      var cronString = document.getElementById("cronString").value;
+      alert('Schedule loaded from CRON format:\n' + cronString);
+    }
+  </script>
+</body>
+</html>
